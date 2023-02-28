@@ -24,5 +24,11 @@ namespace Template_4337
         {
             InitializeComponent();
         }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            _4337_ШайхуллинаАделина shadel = new _4337_ШайхуллинаАделина();
+            shadel.Show();
+        }
     }
 }
