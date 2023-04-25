@@ -4,8 +4,9 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="d37a24151d134b1e9e5f5ace22b2b450" Name="Diagram1">
+      <Diagram DiagramId="50f3c7a7d72a47e59718ea95359101df" Name="Diagram1">
         <EntityTypeShape EntityType="laba2_ISRPOModel.import" Width="1.5" PointX="0.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="laba2_ISRPOModel.import3" Width="1.5" PointX="2.75" PointY="0.75" IsExpanded="true" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

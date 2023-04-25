@@ -26,5 +26,6 @@ namespace Template_4337
         }
     
         public virtual DbSet<import> import { get; set; }
+        public virtual DbSet<import3> import3 { get; set; }
     }
 }

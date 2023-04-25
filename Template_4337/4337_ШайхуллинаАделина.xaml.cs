@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +14,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
 using Excel = Microsoft.Office.Interop.Excel;
+using System.Text.Json;
+using Word = Microsoft.Office.Interop.Word;
 
 namespace Template_4337
 {
@@ -126,6 +129,125 @@ namespace Template_4337
                 rangeBorders.Borders[Microsoft.Office.Interop.Excel.XlBordersIndex.xlInsideHorizontal].LineStyle =
                 rangeBorders.Borders[Microsoft.Office.Interop.Excel.XlBordersIndex.xlInsideVertical].LineStyle = Microsoft.Office.Interop.Excel.XlLineStyle.xlContinuous;
                 worksheet.Columns.AutoFit();
+            }
+            app.Visible = true;
+        }
+
+        class StaffJSON
+        {
+            public int Id { get; set; }
+            public string CodeStaff { get; set; }
+            public string Position { get; set; }
+            public string FullName { get; set; }
+            public string Log { get; set; }
+            public string Password { get; set; }
+            public string LastEnter { get; set; }
+            public string TypeEnter { get; set; }
+        }
+        private void BnImportJSON_Click(object sender, RoutedEventArgs e)
+        {
+            string json = File.ReadAllText(@"C:\Users\ashai\Desktop\Импорт\4.json");
+            var staffs = JsonSerializer.Deserialize<List<StaffJSON>>(json);
+            using (Entities entities = new Entities())
+            {
+                foreach(StaffJSON staffJSON in staffs)
+                {
+                    try
+                    {
+                        entities.import3.Add(new import3() 
+                        { 
+                            Id = Convert.ToInt32(staffJSON.Id),
+                            CodeStaff = staffJSON.CodeStaff,
+                            Position = staffJSON.Position,
+                            FullName = staffJSON.FullName,
+                            Log = staffJSON.Log,
+                            Password = staffJSON.Password,
+                            LastEnter = staffJSON.LastEnter,
+                            TypeEnter = staffJSON.TypeEnter
+                        });
+
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                    }
+                }
+                MessageBox.Show("Успешно!");
+                entities.SaveChanges();
+            }
+        }
+
+        private void BnExportWord_Click(object sender, RoutedEventArgs e)
+        {
+            List<import3> staffs;
+
+            using (Entities entities = new Entities())
+            {
+                staffs = entities.import3.ToList();
+            }
+
+            var app = new Microsoft.Office.Interop.Word.Application();
+            Microsoft.Office.Interop.Word.Document document = app.Documents.Add();
+
+            for (int i = 0; i < _sheetsCount; i++)
+            {
+                Microsoft.Office.Interop.Word.Paragraph paragraph = document.Paragraphs.Add();
+                Microsoft.Office.Interop.Word.Range range = paragraph.Range;
+
+                List<string[]> RoleCategories = new List<string[]>() { //for sheets name
+                    new string[]{ "Администратор" },
+                    new string[]{ "Старший смены" },
+                    new string[]{ "Продавец" },
+                };
+
+                var data = i == 0 ? staffs.Where(o => o.Position == "Администратор")
+                        : i == 1 ? staffs.Where(o => o.Position == "Старший смены")
+                        : i == 2 ? staffs.Where(o => o.Position == "Продавец") : staffs; //sort for task
+                List<import3> currentStaffs = data.ToList();
+                int countStaffsInCategory = currentStaffs.Count();
+
+                Microsoft.Office.Interop.Word.Paragraph tableParagraph = document.Paragraphs.Add();
+                Microsoft.Office.Interop.Word.Range tableRange = tableParagraph.Range;
+                Microsoft.Office.Interop.Word.Table staffsTable = document.Tables.Add(tableRange, countStaffsInCategory + 1, 3);
+                staffsTable.Borders.InsideLineStyle =
+                staffsTable.Borders.OutsideLineStyle =
+                Microsoft.Office.Interop.Word.WdLineStyle.wdLineStyleSingle;
+                staffsTable.Range.Cells.VerticalAlignment =
+                Microsoft.Office.Interop.Word.WdCellVerticalAlignment.wdCellAlignVerticalCenter;
+
+                range.Text = Convert.ToString($"Категория - {RoleCategories[i][0]}");
+                range.InsertParagraphAfter();
+
+                Microsoft.Office.Interop.Word.Range cellRange = staffsTable.Cell(1, 1).Range;
+                cellRange.Text = "Код сотрудника";
+                cellRange = staffsTable.Cell(1, 2).Range;
+                cellRange.Text = "ФИО";
+                cellRange = staffsTable.Cell(1, 3).Range;
+                cellRange.Text = "Логин";
+                staffsTable.Rows[1].Range.Bold = 1;
+                staffsTable.Rows[1].Range.ParagraphFormat.Alignment = Microsoft.Office.Interop.Word.WdParagraphAlignment.wdAlignParagraphCenter;
+
+                int j = 1;
+                foreach (var currentStaff in currentStaffs)
+                {
+                    cellRange = staffsTable.Cell(j + 1, 1).Range;
+                    cellRange.Text = $"{currentStaff.CodeStaff}";
+                    cellRange.ParagraphFormat.Alignment =
+                    Microsoft.Office.Interop.Word.WdParagraphAlignment.wdAlignParagraphCenter;
+                    cellRange = staffsTable.Cell(j + 1, 2).Range;
+                    cellRange.Text = currentStaff.FullName;
+                    cellRange.ParagraphFormat.Alignment =
+                    Microsoft.Office.Interop.Word.WdParagraphAlignment.wdAlignParagraphCenter;
+                    cellRange = staffsTable.Cell(j + 1, 3).Range;
+                    cellRange.Text = currentStaff.Log;
+                    cellRange.ParagraphFormat.Alignment = Microsoft.Office.Interop.Word.WdParagraphAlignment.wdAlignParagraphCenter;
+                    j++;
+                }
+                
+                if (i > 0)
+                {
+                    range.InsertBreak(Microsoft.Office.Interop.Word.WdBreakType.wdPageBreak);
+                }
             }
             app.Visible = true;
         }
